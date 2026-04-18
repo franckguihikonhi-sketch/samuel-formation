@@ -1,11 +1,11 @@
 [build]
-  command = "npm run build"
+  command = "npm install && npm run build"
   publish = "dist"
 
 [build.environment]
   NODE_VERSION = "20"
+  NPM_FLAGS = "--legacy-peer-deps"
 
-# Redirige toutes les routes vers index.html (nécessaire pour React Router)
 [[redirects]]
   from = "/*"
   to = "/index.html"
