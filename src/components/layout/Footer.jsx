@@ -31,13 +31,13 @@ export default function Footer() {
                 boxShadow: '0 0 20px rgba(245,158,11,0.06)',
                 transition: 'border-color 0.3s',
               }}>
-                <img src="/logo.png" alt="Group Polytech'K" className="w-full h-full object-contain" />
+                <img src="/logo.png" alt="Samuel Formation" className="w-full h-full object-contain" />
               </div>
               <div>
                 <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1rem', color: 'white' }}>
-                  Group Polytech'
+                  Samuel{' '}
                 </span>
-                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1rem', color: 'var(--gold)' }}>K</span>
+                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1rem', color: 'var(--gold)' }}>Formation</span>
               </div>
             </Link>
 
@@ -107,7 +107,7 @@ export default function Footer() {
         {/* Bottom bar */}
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: 24, display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <p style={{ color: 'rgba(255,255,255,0.15)', fontSize: '0.78rem' }}>
-            © {new Date().getFullYear()} Group Polytech'K. Tous droits réservés.
+            © {new Date().getFullYear()} Samuel Formation. Tous droits réservés.
           </p>
           <p style={{ color: 'rgba(255,255,255,0.15)', fontSize: '0.78rem' }}>
             Paiement sécurisé via{' '}

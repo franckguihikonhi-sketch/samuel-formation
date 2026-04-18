@@ -344,7 +344,7 @@ export default function Home() {
               Prêt à progresser ?
             </h2>
             <p style={{ color: 'rgba(255,255,255,0.28)', fontSize: '1.05rem', marginBottom: 36, maxWidth: 400, margin: '0 auto 36px', lineHeight: 1.7 }}>
-              Rejoignez Group Polytech'K et accédez aux meilleures formations professionnelles.
+              Rejoignez Samuel Formation et accédez aux meilleures formations professionnelles.
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 12 }}>
               <Link to="/catalogue" className="btn-or" style={{ fontSize: '1rem', padding: '14px 28px' }}>

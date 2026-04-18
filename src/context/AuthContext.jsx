@@ -34,7 +34,23 @@ export function AuthProvider({ children }) {
       .select('*')
       .eq('id', userId)
       .single()
-    setProfil(data)
+
+    if (data) {
+      setProfil(data)
+    } else {
+      // Profil absent (insert échoué lors du signup) — recréation depuis les metadata auth
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const profil = {
+          id: userId,
+          full_name: user.user_metadata?.full_name || '',
+          email: user.email,
+          role: 'user',
+        }
+        await supabase.from('profiles').upsert(profil, { onConflict: 'id' })
+        setProfil(profil)
+      }
+    }
     setChargement(false)
   }
 
@@ -43,17 +59,20 @@ export function AuthProvider({ children }) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password: motDePasse,
-      options: { data: { full_name: nomComplet } },
+      options: {
+        data: { full_name: nomComplet },
+        emailRedirectTo: window.location.origin,
+      },
     })
     if (error) throw error
 
     if (data.user) {
-      await supabase.from('profiles').insert({
+      await supabase.from('profiles').upsert({
         id: data.user.id,
         full_name: nomComplet,
         email,
         role: 'user',
-      })
+      }, { onConflict: 'id' })
     }
     return data
   }

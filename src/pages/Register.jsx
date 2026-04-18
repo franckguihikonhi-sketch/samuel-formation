@@ -85,10 +85,10 @@ export default function Register() {
               boxShadow: '0 0 0 8px rgba(245,158,11,0.04), 0 20px 60px rgba(0,0,0,0.5)',
               marginBottom: 28,
             }}>
-              <img src="/logo.png" alt="Group Polytech'K" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              <img src="/logo.png" alt="Samuel Formation" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             </div>
             <p style={{ color: 'rgba(245,158,11,0.7)', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 10 }}>
-              Group Polytech'K
+              Samuel Formation
             </p>
             <h2 style={{
               fontFamily: 'var(--font-display)', fontSize: '2.2rem', fontWeight: 900,
@@ -132,10 +132,10 @@ export default function Register() {
             display: 'flex', alignItems: 'center', gap: 10, marginBottom: 36, textDecoration: 'none',
           }}>
             <div style={{ width: 34, height: 34, borderRadius: 8, overflow: 'hidden', border: '1px solid rgba(245,158,11,0.2)' }}>
-              <img src="/logo.png" alt="Group Polytech'K" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              <img src="/logo.png" alt="Samuel Formation" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             </div>
             <span style={{ fontWeight: 700, color: 'white', fontSize: '0.9rem' }}>
-              Group Polytech'<span style={{ color: 'var(--gold)' }}>K</span>
+              Samuel <span style={{ color: 'var(--gold)' }}>Formation</span>
             </span>
           </Link>
 

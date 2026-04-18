@@ -74,15 +74,15 @@ export default function Header() {
               transition: 'box-shadow 0.3s, border-color 0.3s',
             }}
               className="group-hover:shadow-[0_0_30px_rgba(245,158,11,0.2)]">
-              <img src="/logo.png" alt="Group Polytech'K"
+              <img src="/logo.png" alt="Samuel Formation"
                 className="w-full h-full object-contain" />
             </div>
             <div className="leading-tight hidden sm:block">
               <div className="flex items-center">
                 <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '0.95rem', color: 'white', letterSpacing: '-0.01em' }}>
-                  Group Polytech'
+                  Samuel{' '}
                 </span>
-                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '0.95rem', color: 'var(--gold)' }}>K</span>
+                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '0.95rem', color: 'var(--gold)' }}>Formation</span>
               </div>
             </div>
           </Link>
