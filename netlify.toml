@@ -4,11 +4,6 @@
 
 [build.environment]
   NODE_VERSION = "20"
-  VITE_SUPABASE_URL = "https://ywjgxlxsuglshiljrwnh.supabase.co"
-  VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3amd4bHhzdWdsc2hpbGpyd25oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NDA1NjAsImV4cCI6MjA5MjAxNjU2MH0.3jrG-yf7j3BnKvkt0ia5ZwNatDd3-gP2ppR_rQIpKio"
-  VITE_CLOUDINARY_CLOUD_NAME = "dn3zzkdth"
-  VITE_CLOUDINARY_UPLOAD_PRESET = "samuel-formation"
-  VITE_FEDAPAY_PUBLIC_KEY = "pk_live_n3Z-ZQVYvmzh6w78VbpBw4iM"
 
 [[redirects]]
   from = "/*"
