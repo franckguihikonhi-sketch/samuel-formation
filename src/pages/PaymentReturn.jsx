@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
-import { CheckCircle, XCircle } from 'lucide-react'
+import { CheckCircle, XCircle, Home } from 'lucide-react'
 import { supabase } from '../lib/supabase'
-import { verifierPaiement } from '../lib/cinetpay'
+import { verifierPaiement } from '../lib/fedapay'
 
 export default function PaymentReturn() {
   const [searchParams] = useSearchParams()
@@ -14,27 +14,30 @@ export default function PaymentReturn() {
   }, [])
 
   async function verifier() {
-    const transactionId = searchParams.get('transaction_id') || searchParams.get('cpm_trans_id')
-    if (!transactionId) { setStatut('erreur'); return }
+    const fedapayId = searchParams.get('id')
+    if (!fedapayId) { setStatut('erreur'); return }
 
     try {
-      const result = await verifierPaiement(transactionId)
+      const result = await verifierPaiement(fedapayId)
+      const internalId = result.data?.internal_id
 
-      if (result.data?.status === 'ACCEPTED') {
+      if (result.data?.status === 'ACCEPTED' && internalId) {
         const { data: achat } = await supabase
           .from('purchases')
           .update({ status: 'completed' })
-          .eq('transaction_id', transactionId)
+          .eq('transaction_id', internalId)
           .select('course_id')
           .single()
 
         setCourseId(achat?.course_id)
         setStatut('succes')
       } else {
-        await supabase
-          .from('purchases')
-          .update({ status: 'failed' })
-          .eq('transaction_id', transactionId)
+        if (internalId) {
+          await supabase
+            .from('purchases')
+            .update({ status: 'failed' })
+            .eq('transaction_id', internalId)
+        }
         setStatut('echec')
       }
     } catch {
@@ -63,7 +66,7 @@ export default function PaymentReturn() {
             </div>
             <h1 className="text-2xl font-bold text-white mb-2">Paiement réussi !</h1>
             <p className="text-noir-400 mb-8">Votre formation est maintenant accessible.</p>
-            <div className="flex gap-3 justify-center">
+            <div className="flex flex-wrap gap-3 justify-center">
               {courseId && (
                 <Link to={`/regarder/${courseId}`} className="btn-or">
                   Accéder à la formation
@@ -71,6 +74,9 @@ export default function PaymentReturn() {
               )}
               <Link to="/tableau-de-bord" className="btn-outline">
                 Mes formations
+              </Link>
+              <Link to="/" className="btn-ghost">
+                <Home className="w-4 h-4" /> Accueil
               </Link>
             </div>
           </>
@@ -81,9 +87,14 @@ export default function PaymentReturn() {
             </div>
             <h1 className="text-2xl font-bold text-white mb-2">Paiement échoué</h1>
             <p className="text-noir-400 mb-8">Le paiement n'a pas pu être traité. Aucun montant n'a été débité.</p>
-            <Link to="/catalogue" className="btn-or">
-              Retour au catalogue
-            </Link>
+            <div className="flex flex-wrap gap-3 justify-center">
+              <Link to="/catalogue" className="btn-or">
+                Retour au catalogue
+              </Link>
+              <Link to="/" className="btn-ghost">
+                <Home className="w-4 h-4" /> Accueil
+              </Link>
+            </div>
           </>
         )}
       </div>

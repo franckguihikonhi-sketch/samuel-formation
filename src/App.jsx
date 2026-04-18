@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from './context/AuthContext'
 import Header from './components/layout/Header'
@@ -68,6 +68,9 @@ export default function App() {
             <Route path="videos" element={<AdminVideos />} />
             <Route path="upload" element={<AdminUpload />} />
           </Route>
+
+          {/* 404 */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

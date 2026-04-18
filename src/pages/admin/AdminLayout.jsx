@@ -1,5 +1,5 @@
-import { NavLink, Outlet } from 'react-router-dom'
-import { LayoutDashboard, FolderOpen, Video, Upload, GraduationCap } from 'lucide-react'
+import { NavLink, Link, Outlet } from 'react-router-dom'
+import { LayoutDashboard, FolderOpen, Video, Upload, GraduationCap, Home } from 'lucide-react'
 
 const navItems = [
   { to: '/admin', label: 'Tableau de bord', icon: LayoutDashboard, end: true },
@@ -35,6 +35,15 @@ export default function AdminLayout() {
               {label}
             </NavLink>
           ))}
+          <div className="pt-2 mt-2 border-t border-noir-700">
+            <Link
+              to="/"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-noir-300 hover:bg-noir-800 hover:text-white"
+            >
+              <Home className="w-4 h-4" />
+              Retour à l'accueil
+            </Link>
+          </div>
         </nav>
       </aside>
 

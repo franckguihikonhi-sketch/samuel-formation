@@ -1,69 +1,141 @@
 import { Link } from 'react-router-dom'
-import { Play, BookOpen, ArrowUpRight } from 'lucide-react'
+import { Play, BookOpen, ArrowUpRight, Clock } from 'lucide-react'
 
 export default function CourseCard({ formation }) {
   const { id, title, slug, description, price, thumbnail_url, categories, videos } = formation
 
   return (
-    <Link
-      to={`/formation/${slug || id}`}
-      className="group relative flex flex-col bg-noir-800/50 border border-white/5 rounded-2xl overflow-hidden hover:border-or-500/40 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-or-950/50"
+    <Link to={`/formation/${slug || id}`}
+      className="group"
+      style={{
+        display: 'flex', flexDirection: 'column', borderRadius: 20, overflow: 'hidden',
+        background: 'linear-gradient(160deg, #0d0d0d, #080808)',
+        border: '1px solid rgba(255,255,255,0.05)',
+        transition: 'all 0.35s cubic-bezier(0.16,1,0.3,1)',
+        textDecoration: 'none', position: 'relative',
+      }}
+      onMouseEnter={e => {
+        e.currentTarget.style.borderColor = 'rgba(245,158,11,0.22)'
+        e.currentTarget.style.transform = 'translateY(-4px)'
+        e.currentTarget.style.boxShadow = '0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(245,158,11,0.1)'
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'
+        e.currentTarget.style.transform = 'translateY(0)'
+        e.currentTarget.style.boxShadow = 'none'
+      }}
     >
-      {/* Miniature */}
-      <div className="relative aspect-video overflow-hidden bg-noir-700/50">
+      {/* Gold shimmer line on top */}
+      <div className="group-hover:opacity-100" style={{
+        position: 'absolute', top: 0, left: 0, right: 0, height: 1,
+        background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.6), transparent)',
+        opacity: 0, transition: 'opacity 0.35s',
+        zIndex: 2,
+      }} />
+
+      {/* Thumbnail */}
+      <div style={{ position: 'relative', aspectRatio: '16/9', overflow: 'hidden', background: '#111', flexShrink: 0 }}>
         {thumbnail_url ? (
-          <img src={thumbnail_url} alt={title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+          <img src={thumbnail_url} alt={title} style={{
+            width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85,
+            transition: 'transform 0.6s cubic-bezier(0.16,1,0.3,1), opacity 0.3s',
+          }} className="group-hover:scale-105 group-hover:opacity-100" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-noir-700 to-noir-800">
-            <BookOpen className="w-10 h-10 text-noir-600" />
+          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <BookOpen style={{ width: 32, height: 32, color: 'rgba(255,255,255,0.08)' }} />
           </div>
         )}
 
-        {/* Overlay play */}
-        <div className="absolute inset-0 bg-gradient-to-t from-noir-900/60 via-transparent to-transparent" />
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
-          <div className="w-14 h-14 bg-or-500 rounded-full flex items-center justify-center shadow-xl shadow-or-900/50 scale-75 group-hover:scale-100 transition-transform duration-300">
-            <Play className="w-5 h-5 text-noir-900 ml-1" />
+        {/* Gradient overlay */}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(8,8,8,0.85) 0%, rgba(0,0,0,0.2) 50%, transparent 100%)' }} />
+
+        {/* Play button */}
+        <div style={{
+          position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          opacity: 0, transition: 'opacity 0.3s',
+        }} className="group-hover:opacity-100">
+          <div style={{
+            width: 48, height: 48, borderRadius: '50%',
+            background: 'rgba(245,158,11,0.92)',
+            boxShadow: '0 0 0 8px rgba(245,158,11,0.12), 0 8px 32px rgba(245,158,11,0.4)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            transform: 'scale(0.8)', transition: 'transform 0.3s cubic-bezier(0.16,1,0.3,1)',
+          }} className="group-hover:scale-100">
+            <Play style={{ width: 16, height: 16, color: '#0a0a0a', marginLeft: 2 }} />
           </div>
         </div>
 
-        {/* Badge catégorie */}
+        {/* Category badge */}
         {categories?.name && (
-          <span className="absolute top-3 left-3 bg-noir-900/80 backdrop-blur-sm text-or-400 text-xs font-semibold px-2.5 py-1 rounded-lg border border-or-500/20">
+          <span style={{
+            position: 'absolute', top: 10, left: 10, zIndex: 3,
+            fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.04em',
+            padding: '4px 10px', borderRadius: 8,
+            background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(245,158,11,0.2)',
+            color: 'var(--gold)', backdropFilter: 'blur(8px)',
+          }}>
             {categories.name}
           </span>
         )}
 
-        {/* Badge gratuit */}
+        {/* Free badge */}
         {price === 0 && (
-          <span className="absolute top-3 right-3 bg-green-500/90 text-white text-xs font-bold px-2.5 py-1 rounded-lg">
+          <span style={{
+            position: 'absolute', top: 10, right: 10, zIndex: 3,
+            fontSize: '0.68rem', fontWeight: 700,
+            padding: '4px 10px', borderRadius: 8,
+            background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.25)',
+            color: '#4ade80', backdropFilter: 'blur(8px)',
+          }}>
             Gratuit
           </span>
         )}
       </div>
 
-      {/* Contenu */}
-      <div className="flex flex-col flex-1 p-4">
-        <h3 className="font-bold text-white text-sm leading-snug mb-2 line-clamp-2 group-hover:text-or-200 transition-colors">
+      {/* Content */}
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '16px' }}>
+        <h3 style={{
+          fontFamily: 'var(--font-body)', fontWeight: 700, color: 'white',
+          fontSize: '0.875rem', lineHeight: 1.4, marginBottom: 8,
+          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+          transition: 'color 0.2s',
+        }} className="group-hover:text-amber-200">
           {title}
         </h3>
 
         {description && (
-          <p className="text-noir-500 text-xs leading-relaxed mb-3 line-clamp-2 flex-1">{description}</p>
+          <p style={{
+            color: 'rgba(255,255,255,0.22)', fontSize: '0.775rem', lineHeight: 1.6,
+            display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+            flex: 1, marginBottom: 14,
+          }}>
+            {description}
+          </p>
         )}
 
-        <div className="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
-          <div className="text-xs text-noir-500 flex items-center gap-1">
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.04)', marginTop: 'auto',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'rgba(255,255,255,0.18)', fontSize: '0.75rem' }}>
             {videos?.length > 0 && (
-              <><Play className="w-3 h-3" /> {videos.length} vidéo{videos.length > 1 ? 's' : ''}</>
+              <>
+                <Play style={{ width: 11, height: 11 }} />
+                <span>{videos.length} vidéo{videos.length > 1 ? 's' : ''}</span>
+              </>
             )}
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className={`font-black text-base ${price === 0 ? 'text-green-400' : 'text-or-400'}`}>
-              {price === 0 ? 'Gratuit' : `${Number(price).toLocaleString('fr-FR')} F`}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{
+              fontWeight: 800, fontSize: '0.875rem',
+              color: price === 0 ? '#4ade80' : 'var(--gold)',
+            }}>
+              {price === 0 ? 'Gratuit' : `${Number(price).toLocaleString('fr-FR')} FCFA`}
             </span>
-            <ArrowUpRight className="w-3.5 h-3.5 text-or-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <ArrowUpRight style={{
+              width: 13, height: 13, color: 'var(--gold)',
+              opacity: 0, transition: 'opacity 0.2s, transform 0.2s', transform: 'translate(-2px, 2px)',
+            }} className="group-hover:opacity-100 group-hover:translate-x-0 group-hover:translate-y-0" />
           </div>
         </div>
       </div>

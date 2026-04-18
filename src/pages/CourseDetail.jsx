@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { Play, Lock, CreditCard, CheckCircle, ArrowLeft, BookOpen } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import { initierPaiement } from '../lib/cinetpay'
+import { initierPaiement } from '../lib/fedapay'
 import toast from 'react-hot-toast'
 
 export default function CourseDetail() {
@@ -57,13 +57,15 @@ export default function CourseDetail() {
     try {
       const transactionId = `SF_${Date.now()}_${utilisateur.id.slice(0, 8)}`
 
-      await supabase.from('purchases').insert({
+      const { error: insertError } = await supabase.from('purchases').upsert({
         user_id: utilisateur.id,
         course_id: formation.id,
         amount: formation.price,
         transaction_id: transactionId,
         status: 'pending',
-      })
+      }, { onConflict: 'user_id,course_id' })
+
+      if (insertError) throw insertError
 
       const result = await initierPaiement({
         montant: formation.price,
@@ -82,7 +84,8 @@ export default function CourseDetail() {
         toast.error('Erreur lors de l\'initialisation du paiement')
       }
     } catch (err) {
-      toast.error('Erreur de paiement : ' + err.message)
+      const msg = err?.response?.data?.message || err?.message || 'Erreur inconnue'
+      toast.error('Erreur de paiement : ' + msg)
     } finally {
       setPaiementEnCours(false)
     }
@@ -153,6 +156,7 @@ export default function CourseDetail() {
                       <span className="font-medium">Accès débloqué</span>
                     </div>
                     <button
+                      type="button"
                       onClick={() => navigate(`/regarder/${formation.id}`)}
                       className="btn-or w-full justify-center"
                     >
@@ -161,6 +165,7 @@ export default function CourseDetail() {
                   </div>
                 ) : (
                   <button
+                    type="button"
                     onClick={handlePaiement}
                     disabled={paiementEnCours}
                     className="btn-or w-full justify-center"

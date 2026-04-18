@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, Download, Play, ChevronDown, ChevronUp, FolderDown } from 'lucide-react'
+import { ArrowLeft, Home, Download, Play, ChevronDown, ChevronUp, FolderDown } from 'lucide-react'
 import ReactPlayer from 'react-player'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -70,12 +70,16 @@ export default function VideoWatch() {
     try {
       const url = video.cloudinary_url || getVideoUrl(video.cloudinary_public_id)
       const resp = await fetch(url)
+      if (!resp.ok) throw new Error('Réponse serveur invalide')
       const blob = await resp.blob()
+      const objectUrl = URL.createObjectURL(blob)
       const a = document.createElement('a')
-      a.href = URL.createObjectURL(blob)
+      a.href = objectUrl
       a.download = `${video.title.replace(/\s+/g, '_')}.mp4`
+      document.body.appendChild(a)
       a.click()
-      URL.revokeObjectURL(a.href)
+      document.body.removeChild(a)
+      URL.revokeObjectURL(objectUrl)
       toast.success('Téléchargement lancé !')
     } catch {
       toast.error('Erreur lors du téléchargement')
@@ -107,9 +111,16 @@ export default function VideoWatch() {
     <div className="min-h-screen bg-noir-950">
       {/* Barre du haut */}
       <div className="bg-noir-900 border-b border-noir-700 px-4 py-3 flex items-center justify-between">
-        <Link to="/tableau-de-bord" className="flex items-center gap-2 text-noir-300 hover:text-white transition-colors text-sm">
-          <ArrowLeft className="w-4 h-4" /> Mes formations
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-1.5 text-noir-400 hover:text-white transition-colors text-sm">
+            <Home className="w-4 h-4" />
+            <span className="hidden sm:inline">Accueil</span>
+          </Link>
+          <span className="text-noir-700">|</span>
+          <Link to="/tableau-de-bord" className="flex items-center gap-2 text-noir-300 hover:text-white transition-colors text-sm">
+            <ArrowLeft className="w-4 h-4" /> Mes formations
+          </Link>
+        </div>
         <h1 className="font-semibold text-white text-sm hidden md:block">{formation?.title}</h1>
         <button
           onClick={telechargerTout}

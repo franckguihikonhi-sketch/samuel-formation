@@ -88,31 +88,41 @@ alter table public.courses    enable row level security;
 alter table public.videos     enable row level security;
 alter table public.purchases  enable row level security;
 
--- Profiles : lecture par le propriétaire + admins
+-- Fonction sécurisée pour vérifier le rôle admin (évite les références circulaires dans les policies)
+create or replace function public.is_admin()
+returns boolean language sql security definer stable as $$
+  select exists (
+    select 1 from public.profiles
+    where id = auth.uid() and role = 'admin'
+  );
+$$;
+
+-- Profiles : lecture par le propriétaire OU admin
 create policy "Profil visible par propriétaire" on public.profiles
-  for select using (auth.uid() = id);
+  for select using (auth.uid() = id or public.is_admin());
 create policy "Profil modifiable par propriétaire" on public.profiles
   for update using (auth.uid() = id);
+-- Empêche tout client de changer son propre rôle
+create policy "Rôle immuable par client" on public.profiles
+  for update using (true)
+  with check (
+    role = (select role from public.profiles where id = auth.uid())
+    or public.is_admin()
+  );
 
--- Catégories : lecture publique, écriture admin
+-- Catégories : lecture publique, écriture admin uniquement
 create policy "Catégories publiques" on public.categories
   for select using (true);
 create policy "Catégories admin" on public.categories
-  for all using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
-  );
+  for all using (public.is_admin());
 
--- Formations : lecture publique (publiées), écriture admin
+-- Formations : lecture publique (publiées seulement), tout pour admin
 create policy "Formations publiées publiques" on public.courses
-  for select using (is_published = true or
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
-  );
+  for select using (is_published = true or public.is_admin());
 create policy "Formations admin" on public.courses
-  for all using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
-  );
+  for all using (public.is_admin());
 
--- Vidéos : accès si acheté ou admin
+-- Vidéos : accès si achat complété, formation gratuite, ou admin
 create policy "Vidéos accessibles si achat" on public.videos
   for select using (
     exists (
@@ -125,25 +135,18 @@ create policy "Vidéos accessibles si achat" on public.videos
       select 1 from public.courses c
       where c.id = videos.course_id and c.price = 0
     ) or
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+    public.is_admin()
   );
 create policy "Vidéos admin" on public.videos
-  for all using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
-  );
+  for all using (public.is_admin());
 
 -- Achats : visible par acheteur + admin
 create policy "Achats visibles par acheteur" on public.purchases
-  for select using (user_id = auth.uid() or
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
-  );
+  for select using (user_id = auth.uid() or public.is_admin());
 create policy "Créer un achat" on public.purchases
   for insert with check (user_id = auth.uid());
 create policy "Modifier achat" on public.purchases
-  for update using (
-    user_id = auth.uid() or
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
-  );
+  for update using (user_id = auth.uid() or public.is_admin());
 
 -- =====================
 -- Données de test
@@ -151,3 +154,17 @@ create policy "Modifier achat" on public.purchases
 
 -- Pour définir un utilisateur admin, exécutez dans SQL Editor :
 -- UPDATE public.profiles SET role = 'admin' WHERE email = 'votre@email.com';
+
+-- =====================
+-- Migration RLS (à appliquer dans Supabase SQL Editor si le schéma existe déjà)
+-- =====================
+-- drop policy if exists "Profil visible par propriétaire" on public.profiles;
+-- drop policy if exists "Profil modifiable par propriétaire" on public.profiles;
+-- drop policy if exists "Catégories admin" on public.categories;
+-- drop policy if exists "Formations publiées publiques" on public.courses;
+-- drop policy if exists "Formations admin" on public.courses;
+-- drop policy if exists "Vidéos accessibles si achat" on public.videos;
+-- drop policy if exists "Vidéos admin" on public.videos;
+-- drop policy if exists "Achats visibles par acheteur" on public.purchases;
+-- drop policy if exists "Modifier achat" on public.purchases;
+-- Puis re-exécuter les blocs de policies ci-dessus.
