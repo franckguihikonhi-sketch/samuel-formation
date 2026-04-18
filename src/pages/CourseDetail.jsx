@@ -47,6 +47,39 @@ export default function CourseDetail() {
     setChargement(false)
   }
 
+  function chargerCheckoutJS() {
+    return new Promise((resolve, reject) => {
+      if (window.FedaPay) { resolve(); return }
+      const script = document.createElement('script')
+      script.src = 'https://cdn.fedapay.com/checkout.js'
+      script.onload = () => window.FedaPay ? resolve() : reject(new Error('FedaPay non défini après chargement'))
+      script.onerror = () => reject(new Error('Impossible de charger le script FedaPay'))
+      document.head.appendChild(script)
+    })
+  }
+
+  async function handlePaiementFedaPay() {
+    try {
+      await chargerCheckoutJS()
+      window.FedaPay.init({
+        public_key: import.meta.env.VITE_FEDAPAY_PUBLIC_KEY,
+        transaction: {
+          amount: formation.price,
+          description: `Formation : ${formation.title}`,
+        },
+        currency: { iso: 'XOF' },
+        customer: {
+          firstname: profil?.full_name?.split(' ')[0] || 'Client',
+          lastname: profil?.full_name?.split(' ').slice(1).join(' ') || '',
+          email: utilisateur.email,
+        },
+        onComplete: onPaiementComplete,
+      }).open()
+    } catch (err) {
+      toast.error('Service de paiement indisponible — ' + (err.message || 'vérifiez votre connexion'))
+    }
+  }
+
   async function handleAccesFree() {
     if (!utilisateur) {
       navigate('/connexion', { state: { from: { pathname: `/formation/${slug}` } } })
@@ -186,22 +219,7 @@ export default function CourseDetail() {
                   <button
                     type="button"
                     className="btn-or w-full justify-center"
-                    onClick={() => {
-                      window.FedaPay.init({
-                        public_key: import.meta.env.VITE_FEDAPAY_PUBLIC_KEY,
-                        transaction: {
-                          amount: formation.price,
-                          description: `Formation : ${formation.title}`,
-                        },
-                        currency: { iso: 'XOF' },
-                        customer: {
-                          firstname: profil?.full_name?.split(' ')[0] || 'Client',
-                          lastname: profil?.full_name?.split(' ').slice(1).join(' ') || '',
-                          email: utilisateur.email,
-                        },
-                        onComplete: onPaiementComplete,
-                      }).open()
-                    }}
+                    onClick={handlePaiementFedaPay}
                   >
                     <CreditCard className="w-5 h-5" />
                     Acheter — {Number(formation.price).toLocaleString('fr-FR')} FCFA
