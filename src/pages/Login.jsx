@@ -23,12 +23,16 @@ export default function Login() {
       navigate(destination, { replace: true })
     } catch (err) {
       const msg = err.message || ''
-      if (msg.includes('Invalid login credentials') || msg.includes('invalid_credentials')) {
+      if (msg === 'SERVICE_UNCONFIGURED') {
+        toast.error('Service non configuré — variables Supabase manquantes sur Netlify')
+      } else if (msg.includes('Invalid API') || msg.includes('Invalid api')) {
+        toast.error('Clé API Supabase invalide — vérifiez VITE_SUPABASE_ANON_KEY dans Netlify')
+      } else if (msg.includes('Invalid login credentials') || msg.includes('invalid_credentials')) {
         toast.error('Email ou mot de passe incorrect')
       } else if (msg.includes('Email not confirmed')) {
-        toast.error('Veuillez confirmer votre email')
+        toast.error('Veuillez confirmer votre email avant de vous connecter')
       } else {
-        toast.error('Erreur : ' + msg)
+        toast.error(msg || 'Erreur de connexion')
       }
     } finally {
       setChargement(false)

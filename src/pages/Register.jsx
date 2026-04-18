@@ -33,7 +33,16 @@ export default function Register() {
         navigate('/connexion')
       }
     } catch (err) {
-      toast.error(err.message || "Erreur lors de l'inscription")
+      const msg = err.message || ''
+      if (msg === 'SERVICE_UNCONFIGURED') {
+        toast.error('Service non configuré — variables Supabase manquantes sur Netlify')
+      } else if (msg.includes('Invalid API') || msg.includes('Invalid api')) {
+        toast.error('Clé API Supabase invalide — vérifiez VITE_SUPABASE_ANON_KEY dans Netlify')
+      } else if (msg.includes('User already registered')) {
+        toast.error('Un compte existe déjà avec cet email')
+      } else {
+        toast.error(msg || "Erreur lors de l'inscription")
+      }
     } finally {
       setChargement(false)
     }

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase, supabaseConfigured } from '../lib/supabase'
 
 const AuthContext = createContext(null)
 
@@ -39,6 +39,7 @@ export function AuthProvider({ children }) {
   }
 
   async function inscription({ email, motDePasse, nomComplet }) {
+    if (!supabaseConfigured) throw new Error('SERVICE_UNCONFIGURED')
     const { data, error } = await supabase.auth.signUp({
       email,
       password: motDePasse,
@@ -58,6 +59,7 @@ export function AuthProvider({ children }) {
   }
 
   async function connexion({ email, motDePasse }) {
+    if (!supabaseConfigured) throw new Error('SERVICE_UNCONFIGURED')
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password: motDePasse,
