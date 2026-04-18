@@ -3,7 +3,6 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { Play, Lock, CreditCard, CheckCircle, ArrowLeft, BookOpen } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import { FedaCheckoutButton } from 'fedapay-reactjs'
 import toast from 'react-hot-toast'
 
 export default function CourseDetail() {
@@ -184,26 +183,29 @@ export default function CourseDetail() {
                     <CreditCard className="w-5 h-5" /> Se connecter pour acheter
                   </button>
                 ) : (
-                  <FedaCheckoutButton
-                    options={{
-                      public_key: import.meta.env.VITE_FEDAPAY_PUBLIC_KEY,
-                      transaction: {
-                        amount: formation.price,
-                        description: `Formation : ${formation.title}`,
-                      },
-                      currency: { iso: 'XOF' },
-                      customer: {
-                        firstname: profil?.full_name?.split(' ')[0] || 'Client',
-                        lastname: profil?.full_name?.split(' ').slice(1).join(' ') || '',
-                        email: utilisateur.email,
-                      },
-                      button: {
-                        class: 'btn-or w-full justify-center',
-                        text: `Acheter — ${Number(formation.price).toLocaleString('fr-FR')} FCFA`,
-                      },
-                      onComplete: onPaiementComplete,
+                  <button
+                    type="button"
+                    className="btn-or w-full justify-center"
+                    onClick={() => {
+                      window.FedaPay.init({
+                        public_key: import.meta.env.VITE_FEDAPAY_PUBLIC_KEY,
+                        transaction: {
+                          amount: formation.price,
+                          description: `Formation : ${formation.title}`,
+                        },
+                        currency: { iso: 'XOF' },
+                        customer: {
+                          firstname: profil?.full_name?.split(' ')[0] || 'Client',
+                          lastname: profil?.full_name?.split(' ').slice(1).join(' ') || '',
+                          email: utilisateur.email,
+                        },
+                        onComplete: onPaiementComplete,
+                      }).open()
                     }}
-                  />
+                  >
+                    <CreditCard className="w-5 h-5" />
+                    Acheter — {Number(formation.price).toLocaleString('fr-FR')} FCFA
+                  </button>
                 )}
 
                 <div className="mt-4 space-y-2 text-xs text-noir-400">
