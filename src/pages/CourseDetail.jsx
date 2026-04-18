@@ -63,6 +63,7 @@ export default function CourseDetail() {
       await chargerCheckoutJS()
       window.FedaPay.init({
         public_key: import.meta.env.VITE_FEDAPAY_PUBLIC_KEY,
+        application_id: import.meta.env.VITE_FEDAPAY_APP_ID,
         transaction: {
           amount: formation.price,
           description: `Formation : ${formation.title}`,
