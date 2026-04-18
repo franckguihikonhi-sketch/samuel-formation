@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { Play, Lock, CreditCard, CheckCircle, ArrowLeft, BookOpen } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import { initierPaiement } from '../lib/fedapay'
+import { FedaCheckoutButton } from 'fedapay-reactjs'
 import toast from 'react-hot-toast'
 
 export default function CourseDetail() {
@@ -48,46 +48,46 @@ export default function CourseDetail() {
     setChargement(false)
   }
 
-  async function handlePaiement() {
+  async function handleAccesFree() {
     if (!utilisateur) {
       navigate('/connexion', { state: { from: { pathname: `/formation/${slug}` } } })
       return
     }
     setPaiementEnCours(true)
     try {
-      const transactionId = `SF_${Date.now()}_${utilisateur.id.slice(0, 8)}`
+      await supabase.from('purchases').upsert({
+        user_id: utilisateur.id,
+        course_id: formation.id,
+        amount: 0,
+        transaction_id: `free_${Date.now()}`,
+        status: 'completed',
+      }, { onConflict: 'user_id,course_id' })
+      setAAcces(true)
+      navigate(`/regarder/${formation.id}`)
+    } catch {
+      navigate(`/regarder/${formation.id}`)
+    } finally {
+      setPaiementEnCours(false)
+    }
+  }
 
-      const { error: insertError } = await supabase.from('purchases').upsert({
+  async function onPaiementComplete(resp) {
+    if (resp?.transaction?.status === 'approved') {
+      const { error } = await supabase.from('purchases').upsert({
         user_id: utilisateur.id,
         course_id: formation.id,
         amount: formation.price,
-        transaction_id: transactionId,
-        status: 'pending',
+        transaction_id: String(resp.transaction.id),
+        status: 'completed',
       }, { onConflict: 'user_id,course_id' })
-
-      if (insertError) throw insertError
-
-      const result = await initierPaiement({
-        montant: formation.price,
-        description: `Formation : ${formation.title}`,
-        transactionId,
-        customer: {
-          nom: profil?.full_name?.split(' ').slice(1).join(' ') || 'Client',
-          prenom: profil?.full_name?.split(' ')[0] || 'Samuel',
-          email: utilisateur.email,
-        },
-      })
-
-      if (result.code === '201') {
-        window.location.href = result.data.payment_url
+      if (error) {
+        toast.error('Paiement reçu mais erreur de mise à jour — contactez le support')
       } else {
-        toast.error('Erreur lors de l\'initialisation du paiement')
+        toast.success('Paiement réussi ! Accès débloqué.')
+        setAAcces(true)
       }
-    } catch (err) {
-      const msg = err?.response?.data?.message || err?.message || 'Erreur inconnue'
-      toast.error('Erreur de paiement : ' + msg)
-    } finally {
-      setPaiementEnCours(false)
+    } else if (resp?.transaction?.status !== 'canceled') {
+      toast.error('Paiement non complété')
     }
   }
 
@@ -163,22 +163,47 @@ export default function CourseDetail() {
                       <Play className="w-5 h-5" /> Regarder maintenant
                     </button>
                   </div>
-                ) : (
+                ) : formation.price === 0 ? (
                   <button
                     type="button"
-                    onClick={handlePaiement}
+                    onClick={handleAccesFree}
                     disabled={paiementEnCours}
                     className="btn-or w-full justify-center"
                   >
-                    {paiementEnCours ? (
-                      <div className="w-5 h-5 border-2 border-noir-900 border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <>
-                        <CreditCard className="w-5 h-5" />
-                        {formation.price === 0 ? 'Accéder gratuitement' : 'Acheter maintenant'}
-                      </>
-                    )}
+                    {paiementEnCours
+                      ? <div className="w-5 h-5 border-2 border-noir-900 border-t-transparent rounded-full animate-spin" />
+                      : <><Play className="w-5 h-5" /> Accéder gratuitement</>
+                    }
                   </button>
+                ) : !utilisateur ? (
+                  <button
+                    type="button"
+                    onClick={() => navigate('/connexion', { state: { from: { pathname: `/formation/${slug}` } } })}
+                    className="btn-or w-full justify-center"
+                  >
+                    <CreditCard className="w-5 h-5" /> Se connecter pour acheter
+                  </button>
+                ) : (
+                  <FedaCheckoutButton
+                    options={{
+                      public_key: import.meta.env.VITE_FEDAPAY_PUBLIC_KEY,
+                      transaction: {
+                        amount: formation.price,
+                        description: `Formation : ${formation.title}`,
+                      },
+                      currency: { iso: 'XOF' },
+                      customer: {
+                        firstname: profil?.full_name?.split(' ')[0] || 'Client',
+                        lastname: profil?.full_name?.split(' ').slice(1).join(' ') || '',
+                        email: utilisateur.email,
+                      },
+                      button: {
+                        class: 'btn-or w-full justify-center',
+                        text: `Acheter — ${Number(formation.price).toLocaleString('fr-FR')} FCFA`,
+                      },
+                      onComplete: onPaiementComplete,
+                    }}
+                  />
                 )}
 
                 <div className="mt-4 space-y-2 text-xs text-noir-400">
