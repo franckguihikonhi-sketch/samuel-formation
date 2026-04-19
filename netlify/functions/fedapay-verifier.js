@@ -6,6 +6,8 @@ export async function handler(event) {
   }
 
   const SECRET_KEY = process.env.FEDAPAY_SECRET_KEY
+  const SUPABASE_URL = process.env.SUPABASE_URL
+  const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
   const fedapayId = event.queryStringParameters?.id
 
   if (!SECRET_KEY) {
@@ -23,15 +25,47 @@ export async function handler(event) {
 
     const transaction = data?.['v1/transaction'] || data?.transaction || data
     const status = transaction?.status
+    const internalId = transaction?.custom_metadata?.internal_id
+
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: 'SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY non configurée' }),
+      }
+    }
+
+    const supabaseHeaders = {
+      apikey: SUPABASE_SERVICE_KEY,
+      Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=representation',
+    }
+
+    if (status === 'approved' && internalId) {
+      const { data: rows } = await axios.patch(
+        `${SUPABASE_URL}/rest/v1/purchases?transaction_id=eq.${internalId}`,
+        { status: 'completed' },
+        { headers: supabaseHeaders }
+      )
+      const courseId = rows?.[0]?.course_id
+
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ data: { status: 'ACCEPTED', internal_id: internalId, course_id: courseId } }),
+      }
+    }
+
+    if (internalId) {
+      await axios.patch(
+        `${SUPABASE_URL}/rest/v1/purchases?transaction_id=eq.${internalId}`,
+        { status: 'failed' },
+        { headers: supabaseHeaders }
+      )
+    }
 
     return {
       statusCode: 200,
-      body: JSON.stringify({
-        data: {
-          status: status === 'approved' ? 'ACCEPTED' : 'FAILED',
-          internal_id: transaction?.custom_metadata?.internal_id,
-        },
-      }),
+      body: JSON.stringify({ data: { status: 'FAILED', internal_id: internalId } }),
     }
   } catch (err) {
     const msg = err?.response?.data?.message || err?.message || 'Erreur inconnue'

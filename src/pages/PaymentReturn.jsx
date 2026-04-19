@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import { CheckCircle, XCircle, Home } from 'lucide-react'
-import { supabase } from '../lib/supabase'
 import { verifierPaiement } from '../lib/fedapay'
 
 export default function PaymentReturn() {
@@ -19,25 +18,11 @@ export default function PaymentReturn() {
 
     try {
       const result = await verifierPaiement(fedapayId)
-      const internalId = result.data?.internal_id
 
-      if (result.data?.status === 'ACCEPTED' && internalId) {
-        const { data: achat } = await supabase
-          .from('purchases')
-          .update({ status: 'completed' })
-          .eq('transaction_id', internalId)
-          .select('course_id')
-          .single()
-
-        setCourseId(achat?.course_id)
+      if (result.data?.status === 'ACCEPTED') {
+        setCourseId(result.data?.course_id)
         setStatut('succes')
       } else {
-        if (internalId) {
-          await supabase
-            .from('purchases')
-            .update({ status: 'failed' })
-            .eq('transaction_id', internalId)
-        }
         setStatut('echec')
       }
     } catch {

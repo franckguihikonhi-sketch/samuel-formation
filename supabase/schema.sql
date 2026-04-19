@@ -145,8 +145,10 @@ create policy "Achats visibles par acheteur" on public.purchases
   for select using (user_id = auth.uid() or public.is_admin());
 create policy "Créer un achat" on public.purchases
   for insert with check (user_id = auth.uid());
+-- Seul le serveur (service_role) ou un admin peut passer status à 'completed'
 create policy "Modifier achat" on public.purchases
-  for update using (user_id = auth.uid() or public.is_admin());
+  for update using (user_id = auth.uid() or public.is_admin())
+  with check (public.is_admin() or status != 'completed');
 
 -- =====================
 -- Données de test

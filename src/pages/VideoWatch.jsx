@@ -26,9 +26,10 @@ export default function VideoWatch() {
   async function verifierAccesEtCharger() {
     if (!utilisateur) { navigate('/connexion'); return }
 
+    // Étape 1 : vérifier l'accès sans charger les URLs vidéo
     const { data: cours } = await supabase
       .from('courses')
-      .select('*, videos(id, title, cloudinary_url, cloudinary_public_id, duration, order_index)')
+      .select('id, title, slug, price')
       .eq('id', courseId)
       .single()
 
@@ -45,12 +46,19 @@ export default function VideoWatch() {
 
       if (!achat) {
         toast.error('Accès non autorisé. Veuillez acheter cette formation.')
-        navigate(`/formation/${courseId}`)
+        navigate(`/formation/${cours.slug}`)
         return
       }
     }
 
-    const vidsTriees = (cours.videos || []).sort((a, b) => a.order_index - b.order_index)
+    // Étape 2 : accès confirmé — charger les vidéos avec URLs
+    const { data: videosData } = await supabase
+      .from('videos')
+      .select('id, title, cloudinary_url, cloudinary_public_id, duration, order_index')
+      .eq('course_id', courseId)
+      .order('order_index')
+
+    const vidsTriees = (videosData || []).sort((a, b) => a.order_index - b.order_index)
     setFormation(cours)
     setVideos(vidsTriees)
 
