@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { Play, Lock, CreditCard, CheckCircle, ArrowLeft, BookOpen } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import { verifierPaiement } from '../lib/fedapay'
 import toast from 'react-hot-toast'
 
 export default function CourseDetail() {
@@ -61,12 +62,29 @@ export default function CourseDetail() {
   async function handlePaiementFedaPay() {
     try {
       await chargerCheckoutJS()
+
+      // Créer un achat pending avant d'ouvrir le widget pour pouvoir le retrouver côté serveur
+      const internalId = `inline_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+      const { error: errAchat } = await supabase.from('purchases').upsert({
+        user_id: utilisateur.id,
+        course_id: formation.id,
+        amount: formation.price,
+        transaction_id: internalId,
+        status: 'pending',
+      }, { onConflict: 'user_id,course_id' })
+
+      if (errAchat) {
+        toast.error('Erreur de préparation du paiement — réessayez')
+        return
+      }
+
       window.FedaPay.init({
         public_key: import.meta.env.VITE_FEDAPAY_PUBLIC_KEY,
         application_id: import.meta.env.VITE_FEDAPAY_APP_ID,
         transaction: {
           amount: formation.price,
           description: `Formation : ${formation.title}`,
+          custom_metadata: { internal_id: internalId },
         },
         currency: { iso: 'XOF' },
         customer: {
@@ -106,18 +124,17 @@ export default function CourseDetail() {
 
   async function onPaiementComplete(resp) {
     if (resp?.transaction?.status === 'approved') {
-      const { error } = await supabase.from('purchases').upsert({
-        user_id: utilisateur.id,
-        course_id: formation.id,
-        amount: formation.price,
-        transaction_id: String(resp.transaction.id),
-        status: 'completed',
-      }, { onConflict: 'user_id,course_id' })
-      if (error) {
-        toast.error('Paiement reçu mais erreur de mise à jour — contactez le support')
-      } else {
-        toast.success('Paiement réussi ! Accès débloqué.')
-        setAAcces(true)
+      try {
+        // Vérification et confirmation serveur via Netlify function
+        const result = await verifierPaiement(resp.transaction.id)
+        if (result.data?.status === 'ACCEPTED') {
+          toast.success('Paiement réussi ! Accès débloqué.')
+          setAAcces(true)
+        } else {
+          toast.error('Paiement reçu mais non confirmé — contactez le support')
+        }
+      } catch {
+        toast.error('Paiement reçu mais erreur de confirmation — contactez le support')
       }
     } else if (resp?.transaction?.status !== 'canceled') {
       toast.error('Paiement non complété')
