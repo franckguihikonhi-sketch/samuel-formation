@@ -23,7 +23,7 @@ export default function CourseDetail() {
     const { data } = await supabase
       .from('courses')
       .select('*, categories(name), videos(id, title, duration, order_index)')
-      .or(`slug.eq.${slug},id.eq.${slug}`)
+      .eq('slug', slug)
       .eq('is_published', true)
       .single()
 
