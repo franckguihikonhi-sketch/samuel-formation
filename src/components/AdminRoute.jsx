@@ -1,8 +1,9 @@
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 export default function AdminRoute({ children }) {
   const { utilisateur, estAdmin, chargement } = useAuth()
+  const location = useLocation()
 
   if (chargement) {
     return (
@@ -12,7 +13,7 @@ export default function AdminRoute({ children }) {
     )
   }
 
-  if (!utilisateur) return <Navigate to="/connexion" replace />
+  if (!utilisateur) return <Navigate to="/connexion" state={{ from: location }} replace />
   if (!estAdmin) return <Navigate to="/" replace />
   return children
 }
