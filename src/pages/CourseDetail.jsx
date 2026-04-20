@@ -15,6 +15,8 @@ export default function CourseDetail() {
   const [aAcces, setAAcces] = useState(false)
   const [chargement, setChargement] = useState(true)
   const [paiementEnCours, setPaiementEnCours] = useState(false)
+  const [waveEnAttente, setWaveEnAttente] = useState(false)
+  const [waveInternalId, setWaveInternalId] = useState(null)
 
   useEffect(() => {
     chargerFormation()
@@ -96,6 +98,55 @@ export default function CourseDetail() {
       }).open()
     } catch (err) {
       toast.error('Service de paiement indisponible — ' + (err.message || 'vérifiez votre connexion'))
+    }
+  }
+
+  async function handlePaiementWave() {
+    if (!utilisateur) {
+      navigate('/connexion', { state: { from: { pathname: `/formation/${slug}` } } })
+      return
+    }
+    setPaiementEnCours(true)
+    try {
+      const internalId = `wave_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+      const { error } = await supabase.from('purchases').upsert({
+        user_id: utilisateur.id,
+        course_id: formation.id,
+        amount: formation.price,
+        transaction_id: internalId,
+        status: 'pending',
+      }, { onConflict: 'user_id,course_id' })
+
+      if (error) { toast.error('Erreur de préparation — réessayez'); return }
+
+      const waveUrl = `${import.meta.env.VITE_WAVE_MERCHANT_URL}?amount=${formation.price}`
+      window.open(waveUrl, '_blank')
+      setWaveInternalId(internalId)
+      setWaveEnAttente(true)
+    } catch {
+      toast.error('Erreur — réessayez')
+    } finally {
+      setPaiementEnCours(false)
+    }
+  }
+
+  async function confirmerPaiementWave() {
+    setPaiementEnCours(true)
+    try {
+      const res = await fetch('/api/wave-confirmer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transactionId: waveInternalId, userId: utilisateur.id }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      toast.success('Paiement confirmé ! Accès débloqué.')
+      setAAcces(true)
+      setWaveEnAttente(false)
+    } catch (err) {
+      toast.error(err.message || 'Erreur de confirmation — contactez le support')
+    } finally {
+      setPaiementEnCours(false)
     }
   }
 
@@ -233,15 +284,51 @@ export default function CourseDetail() {
                   >
                     <CreditCard className="w-5 h-5" /> Se connecter pour acheter
                   </button>
+                ) : waveEnAttente ? (
+                  <div className="space-y-3">
+                    <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 text-sm text-blue-300">
+                      Effectuez le paiement de <strong>{Number(formation.price).toLocaleString('fr-FR')} FCFA</strong> sur Wave, puis confirmez ci-dessous.
+                    </div>
+                    <button
+                      type="button"
+                      onClick={confirmerPaiementWave}
+                      disabled={paiementEnCours}
+                      className="btn-or w-full justify-center"
+                    >
+                      {paiementEnCours
+                        ? <div className="w-5 h-5 border-2 border-noir-900 border-t-transparent rounded-full animate-spin" />
+                        : <><CheckCircle className="w-5 h-5" /> J'ai payé sur Wave</>
+                      }
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setWaveEnAttente(false)}
+                      className="btn-ghost w-full justify-center text-sm"
+                    >
+                      Annuler
+                    </button>
+                  </div>
                 ) : (
-                  <button
-                    type="button"
-                    className="btn-or w-full justify-center"
-                    onClick={handlePaiementFedaPay}
-                  >
-                    <CreditCard className="w-5 h-5" />
-                    Acheter — {Number(formation.price).toLocaleString('fr-FR')} FCFA
-                  </button>
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      onClick={handlePaiementWave}
+                      disabled={paiementEnCours}
+                      className="w-full flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-400 text-white font-semibold py-3 px-4 rounded-xl transition-colors"
+                    >
+                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+                      Payer avec Wave
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handlePaiementFedaPay}
+                      disabled={paiementEnCours}
+                      className="btn-outline w-full justify-center text-sm"
+                    >
+                      <CreditCard className="w-4 h-4" />
+                      Autres moyens (Orange Money, Visa…)
+                    </button>
+                  </div>
                 )}
 
                 <div className="mt-4 space-y-2 text-xs text-noir-400">
