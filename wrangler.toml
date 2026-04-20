@@ -1,0 +1,10 @@
+name = "samuel-formation"
+pages_build_output_dir = "dist"
+compatibility_date = "2024-09-23"
+
+# Variables d'environnement : à configurer dans le dashboard Cloudflare
+# Settings > Environment variables > Production
+#
+# FEDAPAY_SECRET_KEY       = sk_live_xxxxx
+# SUPABASE_URL             = https://xxxxxx.supabase.co
+# SUPABASE_SERVICE_ROLE_KEY = eyJxxxxxx
